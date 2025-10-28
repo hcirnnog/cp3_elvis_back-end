@@ -11,7 +11,7 @@ app = Flask(__name__)
 MYSQL_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'sua_senha',
+    'password': 'fiap',
     'database': 'url_shortener'
 }
 
@@ -25,8 +25,24 @@ access_logs = mongo_db['access_logs']
 def get_mysql_connection():
     return mysql.connector.connect(**MYSQL_CONFIG)
 
+def get_mysql_connection_no_db():
+    config = MYSQL_CONFIG.copy()
+    del config['database']
+    return mysql.connector.connect(**config)
+
 def init_mysql_db():
     """Inicializa o banco de dados MySQL e cria a tabela se não existir"""
+    # Primeiro, conecta sem especificar o banco de dados para criar o banco se necessário
+    conn = get_mysql_connection_no_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("CREATE DATABASE IF NOT EXISTS url_shortener")
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+    
+    # Agora conecta ao banco de dados e cria a tabela
     conn = get_mysql_connection()
     cursor = conn.cursor()
     
