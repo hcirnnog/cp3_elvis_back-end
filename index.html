@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="eng-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encurtador de URLs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #520a81;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: rgb(71, 71, 71);
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            color: #044c8f;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        input[type="url"], input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="text"] {
+            margin-top: 10px;
+        }
+        button {
+            background-color: #000000;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #e4e4e4;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            display: none;
+        }
+        .result.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .result.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .url-list {
+            margin-top: 30px;
+            text-align: left;
+        }
+        .url-list h2 {
+            color: #007bff;
+        }
+        .url-item {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .url-item a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .url-item a:hover {
+            text-decoration: underline;
+        }
+        .stats-link {
+            font-size: 14px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Encurtador de URLs</h1>
+        <div class="input-group">
+            <input type="url" id="longUrl" placeholder="Cole sua URL longa aqui" required>
+            <input type="text" id="shortCode" placeholder="Código curto personalizado (opcional)">
+        </div>
+        <button onclick="shortenUrl()">Encurtar URL</button>
+        <div id="result" class="result"></div>
+        
+        <div class="url-list">
+            <h2>URLs Criadas</h2>
+            <div id="urlList"></div>
+        </div>
+    </div>
+
+    <script>
+        const apiBase = 'http://localhost:5000'; // Ajuste se necessário
+
+        async function shortenUrl() {
+            const longUrl = document.getElementById('longUrl').value.trim();
+            const shortCode = document.getElementById('shortCode').value.trim() || generateShortCode();
+            const resultDiv = document.getElementById('result');
+
+            if (!longUrl) {
+                showResult('Por favor, insira uma URL válida.', false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${apiBase}/api/urls`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        short_code: shortCode,
+                        destination_url: longUrl
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const shortUrl = `${window.location.origin}/${data.data.short_code}`;
+                    showResult(`URL encurtada: <a href="${shortUrl}" target="_blank">${shortUrl}</a>`, true);
+                    loadUrls(); // Recarrega a lista
+                } else {
+                    showResult(data.error || 'Erro ao encurtar URL.', false);
+                }
+            } catch (error) {
+                showResult('Erro de conexão.', false);
+            }
+        }
+
+        function showResult(message, isSuccess) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = message;
+            resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+            resultDiv.style.display = 'block';
+        }
+
+        function generateShortCode() {
+            return Math.random().toString(36).substr(2, 8);
+        }
+
+        async function loadUrls() {
+            try {
+                const response = await fetch(`${apiBase}/api/urls`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const urlListDiv = document.getElementById('urlList');
+                    urlListDiv.innerHTML = '';
+
+                    data.data.forEach(url => {
+                        const urlItem = document.createElement('div');
+                        urlItem.className = 'url-item';
+                        urlItem.innerHTML = `
+                            <strong>${url.short_code}</strong> → <a href="${url.destination_url}" target="_blank">${url.destination_url}</a>
+                            <br><span class="stats-link">Acessos: ${url.access_count} | <a href="#" onclick="showStats('${url.short_code}')">Ver stats</a></span>
+                        `;
+                        urlListDiv.appendChild(urlItem);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar URLs:', error);
+            }
+        }
+
+        async function showStats(shortCode) {
+            try {
+                const response = await fetch(`${apiBase}/api/urls/${shortCode}/stats`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(`Estatísticas para ${shortCode}:\nAcessos: ${data.data.access_count}\nCriado em: ${data.data.created_at}`);
+                } else {
+                    alert('Erro ao carregar stats.');
+                }
+            } catch (error) {
+                alert('Erro de conexão.');
+            }
+        }
+
+        // Carrega as URLs ao carregar a página
+        window.onload = loadUrls;
+    </script>
+</body>
+</html>
