@@ -15,6 +15,7 @@
                 <li><a href="#home">Home</a></li>
                 <li><a href="#features">Features</a></li>
                 <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="#history">Histórico</a></li>
             </ul>
         </nav>
     </header>
@@ -53,6 +54,11 @@
             <h2>Suas URLs Criadas</h2>
             <div id="urlList"></div>
         </section>
+
+        <section class="creation-history" id="history">
+            <h2>Histórico de Criações</h2>
+            <div id="creationHistoryList"></div>
+        </section>
     </main>
 
     <footer>
@@ -60,9 +66,8 @@
     </footer>
 
     <script>
-        const apiBase = 'http://localhost:5000'; // Ajuste se necessário
+        const apiBase = 'http://localhost:5000';
 
-        // Formulário de Encurtar URL
         document.getElementById('urlForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const longUrl = document.getElementById('longUrl').value.trim();
@@ -94,6 +99,7 @@
                     const shortUrl = `${window.location.origin}/${data.data.short_code}`;
                     showResult(`URL encurtada: <a href="${shortUrl}" target="_blank">${shortUrl}</a>`, true);
                     loadUrls();
+                    loadCreationHistory();
                 } else {
                     showResult(data.error || 'Erro ao encurtar URL.', false);
                 }
@@ -113,7 +119,6 @@
             return Math.random().toString(36).substr(2, 8);
         }
 
-        // Carregar URLs
         async function loadUrls() {
             try {
                 const response = await fetch(`${apiBase}/api/urls`);
@@ -146,6 +151,30 @@
             }
         }
 
+        async function loadCreationHistory() {
+            try {
+                const response = await fetch(`${apiBase}/api/creation-history`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    const historyDiv = document.getElementById('creationHistoryList');
+                    historyDiv.innerHTML = '';
+
+                    data.data.forEach(log => {
+                        const historyItem = document.createElement('div');
+                        historyItem.className = 'history-item';
+                        historyItem.innerHTML = `
+                            <strong>${log.short_code}</strong> → <a href="${log.destination_url}" target="_blank">${log.destination_url}</a>
+                            <br><small>Criado em: ${log.created_at} | IP: ${log.client_ip}</small>
+                        `;
+                        historyDiv.appendChild(historyItem);
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar histórico:', error);
+            }
+        }
+
         async function showStats(shortCode) {
             try {
                 const response = await fetch(`${apiBase}/api/urls/${shortCode}/stats`);
@@ -162,19 +191,30 @@
         }
 
         function editUrl(shortCode) {
-            // Implementar edição (placeholder)
             alert('Função de edição em desenvolvimento.');
         }
 
         function deleteUrl(shortCode) {
-            // Implementar deleção (placeholder)
             if (confirm('Tem certeza que deseja deletar esta URL?')) {
-                alert('Função de deleção em desenvolvimento.');
+                fetch(`${apiBase}/api/urls/${shortCode}`, { method: 'DELETE' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('URL deletada com sucesso.');
+                            loadUrls();
+                            loadCreationHistory();
+                        } else {
+                            alert('Erro ao deletar URL.');
+                        }
+                    })
+                    .catch(error => alert('Erro de conexão.'));
             }
         }
 
-        // Carrega URLs ao carregar a página
-        window.onload = loadUrls;
+        window.onload = function() {
+            loadUrls();
+            loadCreationHistory();
+        };
     </script>
 </body>
 </html>
