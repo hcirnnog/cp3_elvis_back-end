@@ -17,6 +17,7 @@ MYSQL_CONFIG = {
 mongo_client = MongoClient('mongodb://localhost:27017/')
 mongo_db = mongo_client['url_shortener']
 access_logs = mongo_db['access_logs']
+creation_logs = mongo_db['creation_logs']  # Nova coleção para histórico de criações
 
 @contextmanager
 def get_db():
@@ -57,12 +58,12 @@ def init_db():
 
 def validate_url(url):
     try:
-        response = requests.head(url, allow_redirects=False, timeout=5)
-        if response.status_code in [301, 302, 303, 307, 308]:
-            return False, f"Redirecionamento detectado (HTTP {response.status_code})"
-        return True, None
+        response = requests.head(url, allow_redirects=True, timeout=5)  # Permite redirecionamentos
+        if response.status_code in [200, 201, 202, 301, 302, 303, 307, 308]:  # Permite redirecionamentos
+            return True, None
+        return False, f"URL inválida (Status: {response.status_code})"
     except:
-        return True, None
+        return False, "Erro ao validar URL"
 
 @app.route('/')
 def index():
@@ -70,7 +71,7 @@ def index():
 
 @app.route('/styles.css')
 def serve_css():
-    return send_from_directory('.', 'styles.css')  # Serve CSS da pasta raiz
+    return send_from_directory('.', 'styles.css')
 
 @app.route('/api/health')
 def health():
@@ -111,6 +112,14 @@ def create_url():
                 conn.commit()
                 url_id = cursor.lastrowid
                 cursor.close()
+                # Salva log de criação no MongoDB
+                creation_logs.insert_one({
+                    'short_code': short_code,
+                    'destination_url': destination_url,
+                    'client_ip': request.headers.get('X-Forwarded-For', request.remote_addr),
+                    'user_agent': request.headers.get('User-Agent', 'Unknown'),
+                    'created_at': datetime.utcnow().isoformat()
+                })
                 return jsonify({
                     'success': True,
                     'data': {
@@ -126,6 +135,18 @@ def create_url():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/creation-history')
+def get_creation_history():
+    try:
+        logs = list(creation_logs.find({}, {'_id': 0}).sort('created_at', -1))
+        return jsonify({
+            'success': True,
+            'data': logs,
+            'count': len(logs)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/urls/<short_code>', methods=['DELETE'])
 def delete_url(short_code):
     try:
@@ -137,6 +158,7 @@ def delete_url(short_code):
             cursor.close()
             if deleted:
                 access_logs.delete_many({'short_code': short_code})
+                creation_logs.delete_many({'short_code': short_code})  # Remove do histórico
                 return jsonify({'success': True})
             return jsonify({'success': False, 'error': 'URL não encontrada'}), 404
     except Exception as e:
@@ -217,6 +239,7 @@ if __name__ == '__main__':
     print("  GET    /api/health")
     print("  GET    /api/urls")
     print("  POST   /api/urls")
+    print("  GET    /api/creation-history")
     print("  DELETE /api/urls/<code>")
     print("  GET    /api/urls/<code>/stats")
     print("  GET    /api/urls/<code>/history")
