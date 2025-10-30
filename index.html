@@ -1,121 +1,135 @@
 <!DOCTYPE html>
-<html lang="eng-US">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Encurtador de URLs</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #520a81;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            background-color: rgb(71, 71, 71);
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 600px;
-            text-align: center;
-        }
-        h1 {
-            color: #044c8f;
-            margin-bottom: 20px;
-        }
-        .input-group {
-            margin-bottom: 20px;
-        }
-        input[type="url"], input[type="text"] {
-            width: 100%;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        input[type="text"] {
-            margin-top: 10px;
-        }
-        button {
-            background-color: #000000;
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-        }
-        button:hover {
-            background-color: #e4e4e4;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #e9ecef;
-            border-radius: 4px;
-            display: none;
-        }
-        .result.success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .result.error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        .url-list {
-            margin-top: 30px;
-            text-align: left;
-        }
-        .url-list h2 {
-            color: #007bff;
-        }
-        .url-item {
-            padding: 10px;
-            border-bottom: 1px solid #ccc;
-        }
-        .url-item a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        .url-item a:hover {
-            text-decoration: underline;
-        }
-        .stats-link {
-            font-size: 14px;
-            color: #6c757d;
-        }
-    </style>
+    <title>URL Shortener by auchiztws</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Encurtador de URLs</h1>
-        <div class="input-group">
-            <input type="url" id="longUrl" placeholder="Cole sua URL longa aqui" required>
-            <input type="text" id="shortCode" placeholder="Código curto personalizado (opcional)">
+    <header>
+        <div class="logo">URL Shortener</div>
+        <nav>
+            <ul>
+                <li><a href="#home">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#dashboard">Dashboard</a></li>
+            </ul>
+        </nav>
+        <div class="auth-buttons">
+            <button class="btn btn-secondary" onclick="openModal('login')">Login</button>
+            <button class="btn btn-primary" onclick="openModal('signup')">Sign Up</button>
         </div>
-        <button onclick="shortenUrl()">Encurtar URL</button>
-        <div id="result" class="result"></div>
-        
-        <div class="url-list">
-            <h2>URLs Criadas</h2>
+    </header>
+
+    <main>
+        <section class="hero" id="home">
+            <h1>Encurte suas URLs com Elegância</h1>
+            <p>Crie links curtos personalizados, rastreie acessos e gerencie suas URLs de forma profissional e refinada.</p>
+        </section>
+
+        <section class="shortener-form">
+            <form id="urlForm">
+                <div class="form-group">
+                    <label for="longUrl">URL Longa</label>
+                    <input type="url" id="longUrl" placeholder="Cole sua URL longa aqui" required>
+                </div>
+                <div class="form-group">
+                    <label for="shortCode">Código Curto Personalizado</label>
+                    <input type="text" id="shortCode" placeholder="Ex: meu-link">
+                </div>
+                <div class="form-group">
+                    <label for="category">Categoria</label>
+                    <select id="category">
+                        <option value="">Selecione</option>
+                        <option value="social">Social</option>
+                        <option value="business">Negócios</option>
+                        <option value="personal">Pessoal</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Encurtar URL</button>
+            </form>
+            <div id="result" class="result"></div>
+        </section>
+
+        <section class="url-list" id="dashboard">
+            <h2>Suas URLs Criadas</h2>
             <div id="urlList"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 URL Shortener. Todos os direitos reservados.</p>
+    </footer>
+
+    <!-- Modal de Login -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('login')">&times;</span>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Senha</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Sign Up -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('signup')">&times;</span>
+            <h2>Sign Up</h2>
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupName">Nome</label>
+                    <input type="text" id="signupName" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Senha</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Cadastrar</button>
+            </form>
         </div>
     </div>
 
     <script>
         const apiBase = 'http://localhost:5000'; // Ajuste se necessário
 
-        async function shortenUrl() {
+        // Funções do Modal
+        function openModal(type) {
+            document.getElementById(type + 'Modal').style.display = 'flex';
+        }
+
+        function closeModal(type) {
+            document.getElementById(type + 'Modal').style.display = 'none';
+        }
+
+        // Fechar modal ao clicar fora
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        };
+
+        // Formulário de Encurtar URL
+        document.getElementById('urlForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             const longUrl = document.getElementById('longUrl').value.trim();
             const shortCode = document.getElementById('shortCode').value.trim() || generateShortCode();
+            const category = document.getElementById('category').value;
             const resultDiv = document.getElementById('result');
 
             if (!longUrl) {
@@ -131,7 +145,8 @@
                     },
                     body: JSON.stringify({
                         short_code: shortCode,
-                        destination_url: longUrl
+                        destination_url: longUrl,
+                        category: category
                     })
                 });
 
@@ -140,14 +155,14 @@
                 if (response.ok) {
                     const shortUrl = `${window.location.origin}/${data.data.short_code}`;
                     showResult(`URL encurtada: <a href="${shortUrl}" target="_blank">${shortUrl}</a>`, true);
-                    loadUrls(); // Recarrega a lista
+                    loadUrls();
                 } else {
                     showResult(data.error || 'Erro ao encurtar URL.', false);
                 }
             } catch (error) {
                 showResult('Erro de conexão.', false);
             }
-        }
+        });
 
         function showResult(message, isSuccess) {
             const resultDiv = document.getElementById('result');
@@ -160,6 +175,7 @@
             return Math.random().toString(36).substr(2, 8);
         }
 
+        // Carregar URLs
         async function loadUrls() {
             try {
                 const response = await fetch(`${apiBase}/api/urls`);
@@ -173,8 +189,16 @@
                         const urlItem = document.createElement('div');
                         urlItem.className = 'url-item';
                         urlItem.innerHTML = `
-                            <strong>${url.short_code}</strong> → <a href="${url.destination_url}" target="_blank">${url.destination_url}</a>
-                            <br><span class="stats-link">Acessos: ${url.access_count} | <a href="#" onclick="showStats('${url.short_code}')">Ver stats</a></span>
+                            <div class="url-info">
+                                <strong>${url.short_code}</strong> → <a href="${url.destination_url}" target="_blank">${url.destination_url}</a>
+                                <br><small>Categoria: ${url.category || 'N/A'}</small>
+                            </div>
+                            <div class="url-actions">
+                                <span>Acessos: ${url.access_count}</span>
+                                <a href="#" onclick="showStats('${url.short_code}')"><i class="fas fa-chart-bar"></i> Stats</a>
+                                <a href="#" onclick="editUrl('${url.short_code}')"><i class="fas fa-edit"></i> Editar</a>
+                                <a href="#" onclick="deleteUrl('${url.short_code}')"><i class="fas fa-trash"></i> Deletar</a>
+                            </div>
                         `;
                         urlListDiv.appendChild(urlItem);
                     });
@@ -199,7 +223,32 @@
             }
         }
 
-        // Carrega as URLs ao carregar a página
+        function editUrl(shortCode) {
+            // Implementar edição (placeholder)
+            alert('Função de edição em desenvolvimento.');
+        }
+
+        function deleteUrl(shortCode) {
+            // Implementar deleção (placeholder)
+            if (confirm('Tem certeza que deseja deletar esta URL?')) {
+                alert('Função de deleção em desenvolvimento.');
+            }
+        }
+
+        // Formulários de Auth (placeholders)
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Login realizado com sucesso! (Simulação)');
+            closeModal('login');
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Cadastro realizado com sucesso! (Simulação)');
+            closeModal('signup');
+        });
+
+        // Carrega URLs ao carregar a página
         window.onload = loadUrls;
     </script>
 </body>
