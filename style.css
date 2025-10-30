@@ -1,0 +1,314 @@
+:root {
+    --primary-bg: #F5F5DC; /* Bege Burberry */
+    --secondary-bg: #FFFFFF; /* Branco */
+    --accent-color: #8B4513; /* Marrom escuro */
+    --text-color: #000000; /* Preto */
+    --light-text: #8B4513; /* Marrom para texto leve */
+    --border-color: #D2B48C; /* Bege claro para bordas */
+    --shadow: rgba(139, 69, 19, 0.1); /* Sombra suave marrom */
+    --transition: all 0.3s ease; /* Transições suaves */
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Times New Roman', serif; /* Tipografia elegante como Burberry */
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background-color: var(--secondary-bg);
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 10px var(--shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    font-style: italic; /* Toque elegante */
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 2rem;
+}
+
+nav a {
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+nav a:hover {
+    color: var(--accent-color);
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0; /* Bordas retas para elegância */
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: var(--transition);
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+}
+
+.btn-primary {
+    background-color: var(--accent-color);
+    color: var(--secondary-bg);
+    border-color: var(--accent-color);
+}
+
+.btn-secondary {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px); /* Efeito smooth */
+}
+
+main {
+    flex: 1;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.hero {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem 0;
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    font-weight: normal;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    color: var(--light-text);
+}
+
+.shortener-form {
+    background-color: var(--secondary-bg);
+    padding: 2rem;
+    border-radius: 0;
+    box-shadow: 0 4px 20px var(--shadow);
+    margin-bottom: 3rem;
+    border: 1px solid var(--border-color);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: var(--transition);
+    background-color: var(--primary-bg);
+}
+
+.form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 5px var(--shadow);
+}
+
+.shortener-form .btn {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+}
+
+.result {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: 0;
+    display: none;
+    border: 1px solid var(--border-color);
+}
+
+.result.success {
+    background-color: #F0F8FF;
+    color: #006400;
+}
+
+.result.error {
+    background-color: #FFF5EE;
+    color: #8B0000;
+}
+
+.url-list {
+    background-color: var(--secondary-bg);
+    padding: 2rem;
+    border-radius: 0;
+    box-shadow: 0 4px 20px var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.url-list h2 {
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+    font-weight: normal;
+}
+
+.url-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition);
+}
+
+.url-item:last-child {
+    border-bottom: none;
+}
+
+.url-item:hover {
+    background-color: var(--primary-bg);
+}
+
+.url-info {
+    flex: 1;
+}
+
+.url-info strong {
+    color: var(--accent-color);
+}
+
+.url-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.url-actions a {
+    color: var(--light-text);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.url-actions a:hover {
+    color: var(--accent-color);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    transition: var(--transition);
+}
+
+.modal-content {
+    background-color: var(--secondary-bg);
+    padding: 2rem;
+    border-radius: 0;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px var(--shadow);
+    border: 1px solid var(--border-color);
+    position: relative;
+}
+
+.modal h2 {
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+    font-weight: normal;
+}
+
+.modal .form-group {
+    margin-bottom: 1rem;
+}
+
+.modal .btn {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: var(--light-text);
+    transition: var(--transition);
+}
+
+.close:hover {
+    color: var(--accent-color);
+}
+
+footer {
+    background-color: var(--secondary-bg);
+    color: var(--light-text);
+    text-align: center;
+    padding: 1rem;
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    nav ul {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .url-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+}
