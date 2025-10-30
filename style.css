@@ -59,39 +59,6 @@ nav a:hover {
     color: var(--accent-color);
 }
 
-.auth-buttons {
-    display: flex;
-    gap: 1rem;
-}
-
-.btn {
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0; /* Bordas retas para elegância */
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-family: inherit;
-    transition: var(--transition);
-    background-color: var(--secondary-bg);
-    color: var(--text-color);
-}
-
-.btn-primary {
-    background-color: var(--accent-color);
-    color: var(--secondary-bg);
-    border-color: var(--accent-color);
-}
-
-.btn-secondary {
-    background-color: var(--secondary-bg);
-    color: var(--text-color);
-}
-
-.btn:hover {
-    opacity: 0.9;
-    transform: translateY(-1px); /* Efeito smooth */
-}
-
 main {
     flex: 1;
     padding: 2rem;
@@ -179,21 +146,22 @@ main {
     color: #8B0000;
 }
 
-.url-list {
+.url-list, .creation-history {
     background-color: var(--secondary-bg);
     padding: 2rem;
     border-radius: 0;
     box-shadow: 0 4px 20px var(--shadow);
     border: 1px solid var(--border-color);
+    margin-bottom: 3rem;
 }
 
-.url-list h2 {
+.url-list h2, .creation-history h2 {
     margin-bottom: 1.5rem;
     color: var(--accent-color);
     font-weight: normal;
 }
 
-.url-item {
+.url-item, .history-item {
     padding: 1rem;
     border-bottom: 1px solid var(--border-color);
     display: flex;
@@ -202,11 +170,11 @@ main {
     transition: var(--transition);
 }
 
-.url-item:last-child {
+.url-item:last-child, .history-item:last-child {
     border-bottom: none;
 }
 
-.url-item:hover {
+.url-item:hover, .history-item:hover {
     background-color: var(--primary-bg);
 }
 
@@ -233,57 +201,32 @@ main {
     color: var(--accent-color);
 }
 
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    justify-content: center;
-    align-items: center;
-    transition: var(--transition);
-}
-
-.modal-content {
-    background-color: var(--secondary-bg);
-    padding: 2rem;
-    border-radius: 0;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 4px 20px var(--shadow);
+.btn {
+    padding: 0.5rem 1rem;
     border: 1px solid var(--border-color);
-    position: relative;
-}
-
-.modal h2 {
-    margin-bottom: 1.5rem;
-    color: var(--accent-color);
-    font-weight: normal;
-}
-
-.modal .form-group {
-    margin-bottom: 1rem;
-}
-
-.modal .btn {
-    width: 100%;
-    margin-top: 1rem;
-}
-
-.close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
+    border-radius: 0; /* Bordas retas para elegância */
     cursor: pointer;
-    font-size: 1.5rem;
-    color: var(--light-text);
+    font-size: 0.9rem;
+    font-family: inherit;
     transition: var(--transition);
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
 }
 
-.close:hover {
-    color: var(--accent-color);
+.btn-primary {
+    background-color: var(--accent-color);
+    color: var(--secondary-bg);
+    border-color: var(--accent-color);
+}
+
+.btn-secondary {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px); /* Efeito smooth */
 }
 
 footer {
@@ -306,7 +249,7 @@ footer {
         gap: 1rem;
     }
 
-    .url-item {
+    .url-item, .history-item {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
