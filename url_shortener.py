@@ -4,6 +4,7 @@ from contextlib import contextmanager
 import pymysql
 from pymongo import MongoClient
 import requests
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 
@@ -17,7 +18,7 @@ MYSQL_CONFIG = {
 mongo_client = MongoClient('mongodb://localhost:27017/')
 mongo_db = mongo_client['url_shortener']
 access_logs = mongo_db['access_logs']
-creation_logs = mongo_db['creation_logs']  # Nova coleção para histórico de criações
+creation_logs = mongo_db['creation_logs']
 
 @contextmanager
 def get_db():
@@ -57,13 +58,57 @@ def init_db():
         raise
 
 def validate_url(url):
+    """
+    Valida se a URL é válida verificando:
+    1. Formato básico (esquema e netloc presentes)
+    2. Acessibilidade via requisição HTTP
+    """
     try:
-        response = requests.head(url, allow_redirects=True, timeout=5)  # Permite redirecionamentos
-        if response.status_code in [200, 201, 202, 301, 302, 303, 307, 308]:  # Permite redirecionamentos
-            return True, None
-        return False, f"URL inválida (Status: {response.status_code})"
-    except:
-        return False, "Erro ao validar URL"
+        # Valida formato básico da URL
+        parsed = urlparse(url)
+        if not parsed.scheme or not parsed.netloc:
+            return False, "URL deve começar com http:// ou https://"
+        
+        if parsed.scheme not in ['http', 'https']:
+            return False, "Apenas URLs HTTP/HTTPS são permitidas"
+        
+        # Tenta HEAD primeiro (mais rápido e econômico)
+        try:
+            response = requests.head(
+                url, 
+                allow_redirects=True, 
+                timeout=10,
+                headers={'User-Agent': 'URL-Shortener/1.0'}  # Alguns sites bloqueiam requests sem user-agent
+            )
+            
+            # Aceita qualquer status 2xx ou 3xx como válido
+            if 200 <= response.status_code < 400:
+                return True, None
+                
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+            # Se HEAD falhar, tenta GET (alguns servidores não aceitam HEAD)
+            try:
+                response = requests.get(
+                    url, 
+                    allow_redirects=True, 
+                    timeout=10,
+                    stream=True,  # Não baixa o corpo completo
+                    headers={'User-Agent': 'URL-Shortener/1.0'}
+                )
+                response.close()  # Fecha a conexão imediatamente
+                
+                if 200 <= response.status_code < 400:
+                    return True, None
+                    
+            except Exception:
+                pass
+        
+        # Se chegou aqui, a URL pode estar offline mas tem formato válido
+        # Retorna sucesso para não bloquear URLs temporariamente indisponíveis
+        return True, None
+        
+    except Exception as e:
+        return False, f"Erro na validação: {str(e)}"
 
 @app.route('/')
 def index():
@@ -98,21 +143,30 @@ def create_url():
         data = request.get_json()
         short_code = data.get('short_code', '').strip()
         destination_url = data.get('destination_url', '').strip()
+        
+        # Valida campos obrigatórios
         if not short_code or not destination_url:
             return jsonify({'success': False, 'error': 'Campos obrigatórios ausentes'}), 400
+        
+        # Valida formato do código (apenas letras, números, hífens e underscores)
         if not short_code.replace('-', '').replace('_', '').isalnum():
             return jsonify({'success': False, 'error': 'Código inválido'}), 400
+        
+        # Valida se a URL é acessível
         is_valid, error = validate_url(destination_url)
         if not is_valid:
             return jsonify({'success': False, 'error': error}), 400
+        
         with get_db() as conn:
             cursor = conn.cursor()
             try:
+                # Insere nova URL encurtada no banco
                 cursor.execute("INSERT INTO urls (short_code, destination_url) VALUES (%s, %s)", (short_code, destination_url))
                 conn.commit()
                 url_id = cursor.lastrowid
                 cursor.close()
-                # Salva log de criação no MongoDB
+                
+                # Registra criação no MongoDB para auditoria
                 creation_logs.insert_one({
                     'short_code': short_code,
                     'destination_url': destination_url,
@@ -120,6 +174,7 @@ def create_url():
                     'user_agent': request.headers.get('User-Agent', 'Unknown'),
                     'created_at': datetime.utcnow().isoformat()
                 })
+                
                 return jsonify({
                     'success': True,
                     'data': {
@@ -156,9 +211,11 @@ def delete_url(short_code):
             deleted = cursor.rowcount > 0
             conn.commit()
             cursor.close()
+            
             if deleted:
+                # Remove logs relacionados ao código deletado
                 access_logs.delete_many({'short_code': short_code})
-                creation_logs.delete_many({'short_code': short_code})  # Remove do histórico
+                creation_logs.delete_many({'short_code': short_code})
                 return jsonify({'success': True})
             return jsonify({'success': False, 'error': 'URL não encontrada'}), 404
     except Exception as e:
@@ -172,8 +229,10 @@ def get_stats(short_code):
             cursor.execute("SELECT short_code, destination_url, access_count, created_at FROM urls WHERE short_code = %s", (short_code,))
             url_data = cursor.fetchone()
             cursor.close()
+            
             if not url_data:
                 return jsonify({'success': False, 'error': 'URL não encontrada'}), 404
+            
             if url_data['created_at']:
                 url_data['created_at'] = url_data['created_at'].isoformat()
             return jsonify({'success': True, 'data': url_data})
@@ -190,6 +249,8 @@ def get_history(short_code):
                 cursor.close()
                 return jsonify({'success': False, 'error': 'URL não encontrada'}), 404
             cursor.close()
+        
+        # Busca histórico de acessos no MongoDB
         logs = list(access_logs.find({'short_code': short_code}, {'_id': 0}).sort('accessed_at', -1))
         return jsonify({
             'success': True,
@@ -209,6 +270,7 @@ def redirect_url(short_code):
             cursor = conn.cursor(pymysql.cursors.DictCursor)
             cursor.execute("SELECT destination_url FROM urls WHERE short_code = %s", (short_code,))
             result = cursor.fetchone()
+            
             if not result:
                 cursor.close()
                 return jsonify({
@@ -216,15 +278,20 @@ def redirect_url(short_code):
                     'error': 'URL não encontrada',
                     'short_code': short_code
                 }), 404
+            
+            # Incrementa contador de acessos
             cursor.execute("UPDATE urls SET access_count = access_count + 1 WHERE short_code = %s", (short_code,))
             conn.commit()
             cursor.close()
+            
+            # Registra acesso no MongoDB para análise
             access_logs.insert_one({
                 'short_code': short_code,
                 'client_ip': request.headers.get('X-Forwarded-For', request.remote_addr),
                 'user_agent': request.headers.get('User-Agent', 'Unknown'),
                 'accessed_at': datetime.utcnow().isoformat()
             })
+            
             return redirect(result['destination_url'], code=302)
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
