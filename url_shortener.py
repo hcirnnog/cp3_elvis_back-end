@@ -1,7 +1,7 @@
 from flask import Flask, request, redirect, jsonify, render_template, send_from_directory
 from datetime import datetime
 from contextlib import contextmanager
-import pymysql
+import mysql.connector
 from pymongo import MongoClient
 import requests
 from urllib.parse import urlparse
@@ -12,7 +12,8 @@ MYSQL_CONFIG = {
     'host': 'localhost',
     'user': 'root',
     'password': 'fiap',
-    'database': 'url_shortener'
+    'database': 'url_shortener',
+    'auth_plugin': 'mysql_native_password'
 }
 
 mongo_client = MongoClient('mongodb://localhost:27017/')
@@ -22,7 +23,7 @@ creation_logs = mongo_db['creation_logs']
 
 @contextmanager
 def get_db():
-    conn = pymysql.connect(**MYSQL_CONFIG)
+    conn = mysql.connector.connect(**MYSQL_CONFIG)
     try:
         yield conn
     finally:
@@ -32,7 +33,7 @@ def init_db():
     try:
         temp_config = MYSQL_CONFIG.copy()
         temp_config.pop('database', None)
-        conn = pymysql.connect(**temp_config)
+        conn = mysql.connector.connect(**temp_config)
         cursor = conn.cursor()
         cursor.execute("CREATE DATABASE IF NOT EXISTS url_shortener")
         cursor.close()
@@ -114,9 +115,9 @@ def validate_url(url):
 def index():
     return render_template('index.html')
 
-@app.route('/styles.css')
+@app.route('/style.css')
 def serve_css():
-    return send_from_directory('.', 'styles.css')
+    return send_from_directory('.', 'style.css')
 
 @app.route('/api/health')
 def health():
@@ -126,7 +127,7 @@ def health():
 def list_urls():
     try:
         with get_db() as conn:
-            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            cursor = conn.cursor(dictionary=True)
             cursor.execute("SELECT id, short_code, destination_url, created_at, access_count FROM urls ORDER BY created_at DESC")
             urls = cursor.fetchall()
             cursor.close()
@@ -184,7 +185,7 @@ def create_url():
                         'short_url': f'/{short_code}'
                     }
                 }), 201
-            except pymysql.IntegrityError:
+            except mysql.connector.IntegrityError:
                 cursor.close()
                 return jsonify({'success': False, 'error': 'Código já existe'}), 409
     except Exception as e:
@@ -225,7 +226,7 @@ def delete_url(short_code):
 def get_stats(short_code):
     try:
         with get_db() as conn:
-            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            cursor = conn.cursor(dictionary=True)
             cursor.execute("SELECT short_code, destination_url, access_count, created_at FROM urls WHERE short_code = %s", (short_code,))
             url_data = cursor.fetchone()
             cursor.close()
@@ -267,7 +268,7 @@ def get_history(short_code):
 def redirect_url(short_code):
     try:
         with get_db() as conn:
-            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            cursor = conn.cursor(dictionary=True)
             cursor.execute("SELECT destination_url FROM urls WHERE short_code = %s", (short_code,))
             result = cursor.fetchone()
             
